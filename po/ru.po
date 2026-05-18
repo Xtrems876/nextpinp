@@ -8,6 +8,21 @@ msgstr ""
 "Language: ru\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
+msgid "Behaviour"
+msgstr "Поведение"
+
+msgid "Always on Top"
+msgstr "Поверх всех окон"
+
+msgid "Keep PiP window above all other windows"
+msgstr "Держать PiP-окно поверх всех остальных окон"
+
+msgid "Always Visible on All Workspaces"
+msgstr "Показывать на всех рабочих столах"
+
+msgid "Show PiP window on every workspace"
+msgstr "Отображать PiP-окно на каждом рабочем столе"
+
 msgid "Window Position"
 msgstr "Расположение окна"
 

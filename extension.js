@@ -31,9 +31,11 @@ function isPiP(window) {
     return false;
 }
 
-function applyPiPAttributes(window) {
-    window.stick();
-    window.make_above();
+function applyPiPAttributes(window, settings) {
+    if (settings.get_boolean('always-on-all-workspaces'))
+        window.stick();
+    if (settings.get_boolean('always-on-top'))
+        window.make_above();
 }
 
 // Returns the corner key and target {x, y} for the given corner + offset.
@@ -112,7 +114,7 @@ export default class AutoPiPManager extends Extension {
                 if (!isPiP(window))
                     return GLib.SOURCE_REMOVE;
 
-                applyPiPAttributes(window);
+                applyPiPAttributes(window, this._settings);
 
                 if (!moveToPiPCorner(window, this._settings)) {
                     const actor = window.get_compositor_private();

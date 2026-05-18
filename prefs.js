@@ -10,8 +10,34 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         const settings = this.getSettings();
 
         const page = new Adw.PreferencesPage();
-        const group = new Adw.PreferencesGroup({ title: _('Window Position') });
-        page.add(group);
+
+        // — Behaviour group —
+        const behaviourGroup = new Adw.PreferencesGroup({ title: _('Behaviour') });
+        page.add(behaviourGroup);
+
+        const alwaysOnTopRow = new Adw.SwitchRow({
+            title: _('Always on Top'),
+            subtitle: _('Keep PiP window above all other windows'),
+            active: settings.get_boolean('always-on-top'),
+        });
+        alwaysOnTopRow.connect('notify::active', () => {
+            settings.set_boolean('always-on-top', alwaysOnTopRow.active);
+        });
+        behaviourGroup.add(alwaysOnTopRow);
+
+        const alwaysOnAllWorkspacesRow = new Adw.SwitchRow({
+            title: _('Always Visible on All Workspaces'),
+            subtitle: _('Show PiP window on every workspace'),
+            active: settings.get_boolean('always-on-all-workspaces'),
+        });
+        alwaysOnAllWorkspacesRow.connect('notify::active', () => {
+            settings.set_boolean('always-on-all-workspaces', alwaysOnAllWorkspacesRow.active);
+        });
+        behaviourGroup.add(alwaysOnAllWorkspacesRow);
+
+        // — Window Position group —
+        const positionGroup = new Adw.PreferencesGroup({ title: _('Window Position') });
+        page.add(positionGroup);
 
         const cornerRow = new Adw.ComboRow({
             title: _('Corner'),
@@ -29,7 +55,7 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         cornerRow.connect('notify::selected', () => {
             settings.set_string('corner', CORNER_VALUES[cornerRow.selected]);
         });
-        group.add(cornerRow);
+        positionGroup.add(cornerRow);
 
         const offsetRow = new Adw.SpinRow({
             title: _('Offset'),
@@ -44,7 +70,7 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         offsetRow.connect('notify::value', () => {
             settings.set_int('offset', offsetRow.value);
         });
-        group.add(offsetRow);
+        positionGroup.add(offsetRow);
 
         window.add(page);
     }

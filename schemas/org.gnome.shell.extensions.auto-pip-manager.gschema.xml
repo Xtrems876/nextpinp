@@ -13,5 +13,15 @@
       <summary>Offset in pixels</summary>
       <description>Distance from the chosen corner in pixels</description>
     </key>
+    <key name="always-on-top" type="b">
+      <default>true</default>
+      <summary>Always on top</summary>
+      <description>Keep PiP windows above all other windows</description>
+    </key>
+    <key name="always-on-all-workspaces" type="b">
+      <default>true</default>
+      <summary>Always on all workspaces</summary>
+      <description>Show PiP windows on every workspace</description>
+    </key>
   </schema>
 </schemalist>
