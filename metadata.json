@@ -1,6 +1,7 @@
 {
   "name": "Auto PiP Manager",
   "description": "Snaps PiP windows to a nearest corner. Automatically sets picture-in-picture windows to always-on-top and visible on all workspaces.",
+  "gettext-domain": "nextpinp",
   "uuid": "nextpinp@leonid.nasedkin",
   "shell-version": ["49", "50"],
   "version": 7,

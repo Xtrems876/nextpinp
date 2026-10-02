@@ -6,18 +6,17 @@ const CORNER_VALUES = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
 
 export default class AutoPiPPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const _ = this.gettext.bind(this);
         const settings = this.getSettings();
 
         const page = new Adw.PreferencesPage();
 
         // — Behaviour group —
-        const behaviourGroup = new Adw.PreferencesGroup({ title: _('Behaviour') });
+        const behaviourGroup = new Adw.PreferencesGroup({ title: 'Behaviour' });
         page.add(behaviourGroup);
 
         const alwaysOnTopRow = new Adw.SwitchRow({
-            title: _('Always on Top'),
-            subtitle: _('Keep PiP window above all other windows'),
+            title: 'Always on Top',
+            subtitle: 'Keep PiP window above all other windows',
             active: settings.get_boolean('always-on-top'),
         });
         alwaysOnTopRow.connect('notify::active', () => {
@@ -26,8 +25,8 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         behaviourGroup.add(alwaysOnTopRow);
 
         const alwaysOnAllWorkspacesRow = new Adw.SwitchRow({
-            title: _('Always Visible on All Workspaces'),
-            subtitle: _('Show PiP window on every workspace'),
+            title: 'Always Visible on All Workspaces',
+            subtitle: 'Show PiP window on every workspace',
             active: settings.get_boolean('always-on-all-workspaces'),
         });
         alwaysOnAllWorkspacesRow.connect('notify::active', () => {
@@ -36,17 +35,17 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         behaviourGroup.add(alwaysOnAllWorkspacesRow);
 
         // — Window Position group —
-        const positionGroup = new Adw.PreferencesGroup({ title: _('Window Position') });
+        const positionGroup = new Adw.PreferencesGroup({ title: 'Window Position' });
         page.add(positionGroup);
 
         const cornerRow = new Adw.ComboRow({
-            title: _('Corner'),
+            title: 'Corner',
             model: new Gtk.StringList({
                 strings: [
-                    _('Top Left'),
-                    _('Top Right'),
-                    _('Bottom Right'),
-                    _('Bottom Left'),
+                    'Top Left',
+                    'Top Right',
+                    'Bottom Right',
+                    'Bottom Left',
                 ],
             }),
         });
@@ -58,8 +57,8 @@ export default class AutoPiPPreferences extends ExtensionPreferences {
         positionGroup.add(cornerRow);
 
         const offsetRow = new Adw.SpinRow({
-            title: _('Offset'),
-            subtitle: _('Distance from the screen corner in pixels'),
+            title: 'Offset',
+            subtitle: 'Distance from the screen corner in pixels',
             adjustment: new Gtk.Adjustment({
                 lower: 0,
                 upper: 50,

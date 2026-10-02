@@ -1,6 +1,6 @@
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const PIP_TITLES = [
     'picture-in-picture',
@@ -16,12 +16,13 @@ function isPiP(window) {
         return false;
 
     const title = (window.get_title() ?? '').toLowerCase();
-    if (title && PIP_TITLES.some(t => title === t))
+    const normalizedTitle = title.replace(/[^a-z0-9]+/g, '');
+    if (title && PIP_TITLES.some(t => title === t || normalizedTitle === t.replace(/[^a-z0-9]+/g, '')))
         return true;
 
     const wmClass = window.get_wm_class() ?? '';
     const wmClassInstance = window.get_wm_class_instance() ?? '';
-    if (title && /picture.?in.?picture/i.test(title))
+    if (title && title === _('Picture-in-Picture').toLowerCase())
         return true;
     if (wmClass && /picture.?in.?picture/i.test(wmClass))
         return true;
@@ -31,11 +32,65 @@ function isPiP(window) {
     return false;
 }
 
+function managePiPWindow(window, settings) {
+    const pipWindow = isPiP(window);
+
+    if (!pipWindow) {
+        if (window._nextPinPManaged) {
+            restorePiPAttributes(window);
+            window._nextPinPManaged = false;
+        }
+        return false;
+    }
+
+    const wasManaged = window._nextPinPManaged === true;
+    if (!wasManaged) {
+        window._nextPinPOriginalAbove = window.is_above();
+        window._nextPinPOriginalSticky = window.is_on_all_workspaces();
+    }
+    window._nextPinPManaged = true;
+    applyPiPAttributes(window, settings);
+
+    if (!wasManaged && !moveToPiPCorner(window, settings)) {
+        const actor = window.get_compositor_private();
+        if (actor) {
+            const frameId = actor.connect('first-frame', () => {
+                actor.disconnect(frameId);
+                moveToPiPCorner(window, settings);
+            });
+        }
+    }
+
+    return true;
+}
+
 function applyPiPAttributes(window, settings) {
-    if (settings.get_boolean('always-on-all-workspaces'))
+    if (settings.get_boolean('always-on-all-workspaces') || window._nextPinPOriginalSticky) {
         window.stick();
-    if (settings.get_boolean('always-on-top'))
+    } else {
+        window.unstick();
+    }
+
+    if (settings.get_boolean('always-on-top') || window._nextPinPOriginalAbove) {
         window.make_above();
+    } else {
+        window.unmake_above();
+    }
+}
+
+function restorePiPAttributes(window) {
+    if (window._nextPinPOriginalAbove)
+        window.make_above();
+    else
+        window.unmake_above();
+
+    if (window._nextPinPOriginalSticky)
+        window.stick();
+    else
+        window.unstick();
+
+    delete window._nextPinPOriginalAbove;
+    delete window._nextPinPOriginalSticky;
 }
 
 // Returns the corner key and target {x, y} for the given corner + offset.
@@ -107,29 +162,63 @@ export default class AutoPiPManager extends Extension {
         this._settings = this.getSettings();
         this._pendingIdles = new Set();
 
+        this._settingsChangedId = this._settings.connect('changed', () => {
+            for (const actor of global.get_window_actors()) {
+                const window = actor.meta_window;
+                if (!window)
+                    continue;
+
+                if (managePiPWindow(window, this._settings))
+                    moveToPiPCorner(window, this._settings);
+            }
+        });
+
+        this._trackWindow = window => {
+            if (!window)
+                return;
+
+            window._nextPinPTracked = true;
+            window._nextPinPTitleChangedId = window.connect('notify::title', () => {
+                managePiPWindow(window, this._settings);
+            });
+            managePiPWindow(window, this._settings);
+        };
+
+        this._untrackWindow = window => {
+            if (!window)
+                return;
+
+            window._nextPinPTracked = false;
+            if (window._nextPinPTitleChangedId) {
+                window.disconnect(window._nextPinPTitleChangedId);
+                window._nextPinPTitleChangedId = null;
+            }
+            if (window._nextPinPManaged) {
+                restorePiPAttributes(window);
+                window._nextPinPManaged = false;
+            }
+        };
+
         this._windowCreatedId = global.display.connect('window-created', (_display, window) => {
+            this._trackWindow(window);
+
             const id = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
                 this._pendingIdles.delete(id);
 
-                if (!isPiP(window))
+                if (!window._nextPinPTracked)
                     return GLib.SOURCE_REMOVE;
 
-                applyPiPAttributes(window, this._settings);
-
-                if (!moveToPiPCorner(window, this._settings)) {
-                    const actor = window.get_compositor_private();
-                    if (actor) {
-                        const frameId = actor.connect('first-frame', () => {
-                            actor.disconnect(frameId);
-                            moveToPiPCorner(window, this._settings);
-                        });
-                    }
-                }
+                managePiPWindow(window, this._settings);
 
                 return GLib.SOURCE_REMOVE;
             });
             this._pendingIdles.add(id);
         });
+
+        for (const actor of global.get_window_actors()) {
+            const window = actor.meta_window;
+            this._trackWindow(window);
+        }
 
         // Snap to nearest corner when a PiP window drag ends.
         this._grabOpEndId = global.display.connect('grab-op-end', (_display, window, op) => {
@@ -154,10 +243,25 @@ export default class AutoPiPManager extends Extension {
             this._grabOpEndId = null;
         }
 
+        if (this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = null;
+        }
+
         for (const id of this._pendingIdles)
             GLib.source_remove(id);
         this._pendingIdles = null;
 
+        for (const actor of global.get_window_actors()) {
+            const window = actor.meta_window;
+            if (!window)
+                continue;
+
+            this._untrackWindow(window);
+        }
+
+        this._trackWindow = null;
+        this._untrackWindow = null;
         this._settings = null;
     }
 }

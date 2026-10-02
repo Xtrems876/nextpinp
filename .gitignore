@@ -2,3 +2,8 @@
 dist/
 publish.sh
 *.zip
+
+# Generated translation and schema artifacts
+/po/*.po
+/locale/
+/schemas/gschemas.compiled

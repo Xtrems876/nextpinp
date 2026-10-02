@@ -4,8 +4,6 @@
 
 [Gnome Extenstions](https://extensions.gnome.org/extension/9827/auto-pip-manager/)
 
-[Русская версия](README.ru.md)
-
 ## Features
 
 - Automatically pins PiP windows **above all other windows**
@@ -45,11 +43,15 @@ gnome-extensions prefs nextpinp@leonid.nasedkin
 
 Available corners: Top Left, Top Right, Bottom Right, Bottom Left.
 
-## Adding a new translation
+## Translations
 
-1. Copy `po/ru.po` to `po/<lang>.po` (e.g. `po/de.po`)
-2. Translate the `msgstr` values
-3. Run `./install.sh` — the new `.mo` file is compiled automatically
+PiP window titles are translated from Firefox language packs. To generate the
+locale catalogs before installing, run:
+
+```bash
+./translate.sh
+./install.sh
+```
 
 ## Project structure
 
@@ -57,8 +59,8 @@ Available corners: Top Left, Top Right, Bottom Right, Bottom Left.
 ├── extension.js       Main extension logic
 ├── prefs.js           Preferences UI (libadwaita)
 ├── metadata.json      Extension metadata
+├── translate.sh       Generate PiP title translations
 ├── schemas/           GSettings schema
-├── po/                Translation sources (.po)
 └── install.sh         Build & install script
 ```
 
